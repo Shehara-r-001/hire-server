@@ -4,14 +4,14 @@ import { ConfigService } from '@nestjs/config';
 import { DATA_SOURCE } from '../../constants/db.constants';
 
 import { User } from 'src/app/features/users/entities/user.entity';
-import { EnvConfig } from 'src/app/shared/models/EnvConfig.model';
+import { IEnvConfig } from 'src/app/shared/models/EnvConfig.model';
 import { Company } from 'src/app/features/companies/entities/company.entity';
 
 export const databaseProviders = [
   {
     provide: DATA_SOURCE,
     useFactory: async () => {
-      const configServise = new ConfigService<EnvConfig, true>();
+      const configServise = new ConfigService<IEnvConfig, true>();
       const dataSource = new DataSource({
         type: 'postgres',
         // driver: 'pg',

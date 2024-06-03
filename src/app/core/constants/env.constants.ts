@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
-import { EnvConfig } from '../../shared/models/EnvConfig.model';
+import { IEnvConfig } from '../../shared/models/EnvConfig.model';
 
-const configService = new ConfigService<EnvConfig, true>();
+const configService = new ConfigService<IEnvConfig, true>();
 
 export const PORT = configService.get('PORT');
 

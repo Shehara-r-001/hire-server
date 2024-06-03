@@ -1,4 +1,5 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { UpdateUserDTO } from './DTO/update-user.dto';
+import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 
 import { User } from './entities/user.entity';
@@ -10,6 +11,7 @@ import {
   SortType,
 } from '../../shared/utils/pagination-request';
 import { PaginatedResponse } from '../../shared/utils/paginated-response';
+import { ThrowNotFound } from '../../shared/utils/exceptions';
 
 @Injectable()
 export class UsersService {
@@ -59,7 +61,7 @@ export class UsersService {
         email,
       });
 
-      if (!user) throw new NotFoundException('user not found');
+      ThrowNotFound(user, 'user not found');
 
       return user;
     } catch (error) {
@@ -67,13 +69,15 @@ export class UsersService {
     }
   }
 
-  async findUserByID(id: string) {
+  async findUserByID(_user: User | null, id: string) {
     try {
-      const user = this.userRepository.findOneBy({ id });
+      // todo: need to check roles??
 
-      if (!user) throw new NotFoundException('user not found');
+      const foundUser = this.userRepository.findOneBy({ id });
 
-      return user;
+      ThrowNotFound(foundUser, 'user not found');
+
+      return foundUser;
     } catch (error) {
       throw error;
     }
@@ -83,8 +87,17 @@ export class UsersService {
    * use to create a common query builder. upgrade as you go
    * @returns {SelectQueryBuilder<User>}
    */
-  private getQueryBuilder(): SelectQueryBuilder<User> {
-    return this.userRepository.createQueryBuilder('user');
+  private getQueryBuilder(
+    _user: User | null,
+    queryLevel = 0
+  ): SelectQueryBuilder<User> {
+    const qb = this.userRepository.createQueryBuilder('user');
+
+    // allow users to see only there own extra info
+    if (queryLevel > 0) {
+    }
+
+    return qb;
   }
 
   /**
@@ -93,10 +106,17 @@ export class UsersService {
    * @returns {Promise<PaginatedResponse<User>>}
    */
   async findUsers(
-    request: PaginationRequest
+    user: User,
+    request: PaginationRequest,
+    queryLevel = 1
   ): Promise<PaginatedResponse<User>> {
     try {
-      const qb = this.getQueryBuilder();
+      const qb = this.getQueryBuilder(user, queryLevel);
+
+      // if (user.isManager)
+      //   qb.andWhere('user.companyId = :companyId', {
+      //     companyId: user.companyId,
+      //   });
 
       qb.skip(request.pageSize * (request.page - 1)).take(request.pageSize);
 
@@ -119,4 +139,30 @@ export class UsersService {
       throw error;
     }
   }
+
+  async updateUser(user: User, updateUserDTO: UpdateUserDTO) {
+    try {
+      const { id, ...rest } = updateUserDTO;
+
+      const foundUser = await this.findUserByID(user, id);
+
+      ThrowNotFound(foundUser, 'user not found');
+
+      if (user.id !== foundUser?.id) throw new UnauthorizedException();
+
+      return await this.userRepository.manager.transaction(async (manager) => {
+        const result = await manager.update(User, { id }, { ...rest });
+
+        return Number(result.affected) > 0 ? true : false;
+      });
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  }
+
+  // todo ----------------
+  // update user
+  // delete user
+  // add/drop user from company
 }

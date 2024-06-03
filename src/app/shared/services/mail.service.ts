@@ -2,7 +2,7 @@ import { SendGridService } from '@anchan828/nest-sendgrid';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { EnvConfig } from '../models/EnvConfig.model';
+import { IEnvConfig } from '../models/EnvConfig.model';
 import { IMailData } from '../models/mail.model';
 import { Company } from 'src/app/features/companies/entities/company.entity';
 import { User } from 'src/app/features/users/entities/user.entity';
@@ -11,7 +11,7 @@ import { User } from 'src/app/features/users/entities/user.entity';
 export class MailService {
   constructor(
     private readonly sendGridService: SendGridService,
-    private readonly configService: ConfigService<EnvConfig, true>
+    private readonly configService: ConfigService<IEnvConfig, true>
   ) {}
 
   private SENDER = this.configService.get('SENDGRID_SENDER');

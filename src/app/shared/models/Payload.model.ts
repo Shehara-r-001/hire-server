@@ -3,7 +3,7 @@ export enum PAYLOAD_STATUS {
   SUCCESS = 'SUCCESS',
 }
 
-export interface Payload<T> {
+export interface IPayload<T> {
   status: PAYLOAD_STATUS;
   message: string | null;
   data: T;

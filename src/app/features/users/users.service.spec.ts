@@ -8,11 +8,11 @@ import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { USER_REPOSITORY } from '../../core/constants/repositories.constants';
 import { UserRoles } from '../../shared/enums/UserRoles.enum';
-import { SignUpDTO } from './DTO/signup.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
   let userRepository: Repository<User>;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let entityManager: EntityManager;
 
   // * if it is not a custom token, we can use getRepositoyToken(User) instead

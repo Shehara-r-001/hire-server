@@ -50,6 +50,11 @@ export class User extends BaseEntity {
   @IsString()
   role: string;
 
+  @Column({ nullable: true })
+  @IsOptional()
+  @IsString()
+  companyId: string;
+
   @Column({ type: 'time with time zone' })
   @IsOptional()
   @IsISO8601()
@@ -73,6 +78,14 @@ export class User extends BaseEntity {
 
   @ManyToOne(() => Company, (Company) => Company.Employees)
   Company: Company;
+
+  get isAdmin() {
+    return this.role === UserRoles.ADMIN;
+  }
+
+  get isManager() {
+    return this.role === UserRoles.MANAGER;
+  }
 
   // todo try closure tables
 }

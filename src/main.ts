@@ -6,13 +6,19 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/core/interceptors/response.interceptor';
 import { ErrorFilter } from './app/core/filters/error.filter';
-import { BASE_URL, NODE_ENV, PORT } from './app/core/constants/env.constants';
+import { NODE_ENV } from './app/core/constants/env.constants';
 import { NodeEnvironment } from './app/shared/enums/NodeEnvironment.enum';
+import { ConfigService } from '@nestjs/config';
+import { IEnvConfig } from './app/shared/models/EnvConfig.model';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'debug', 'log'],
   });
+
+  const configService = new ConfigService<IEnvConfig>();
+  const PORT = configService.get('PORT');
+  const BASE_URL = configService.get('BASE_URL');
 
   app.useGlobalPipes(
     new ValidationPipe({

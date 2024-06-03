@@ -58,6 +58,7 @@ export class Company extends BaseEntity {
   Manager: User;
 
   @OneToMany(() => User, (User) => User.Company)
+  @JoinColumn({ referencedColumnName: 'companyId' })
   Employees: User[];
 
   @IsNotEmpty()

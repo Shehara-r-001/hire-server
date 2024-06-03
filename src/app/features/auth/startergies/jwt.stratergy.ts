@@ -4,7 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 
 import { UsersService } from '../../users/users.service';
-import { EnvConfig } from '../../../shared/models/EnvConfig.model';
+import { IEnvConfig } from '../../../shared/models/EnvConfig.model';
 
 export type JwtPayload = {
   sub: string;
@@ -16,7 +16,7 @@ export type JwtPayload = {
 export class JwtAuthStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly userService: UsersService,
-    configService: ConfigService<EnvConfig, true>
+    configService: ConfigService<IEnvConfig, true>
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),

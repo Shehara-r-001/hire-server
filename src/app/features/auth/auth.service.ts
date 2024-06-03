@@ -30,9 +30,11 @@ export class AuthService {
 
         const newUser = await this.userService.findOne(signUpDTO.email);
 
-        const { password, ...rest } = newUser;
+        if (newUser) {
+          const { password, ...rest } = newUser;
 
-        return jwtGenerator(rest);
+          return jwtGenerator(rest);
+        } else throw new BadRequestException();
       }
     } catch (error) {
       throw error;

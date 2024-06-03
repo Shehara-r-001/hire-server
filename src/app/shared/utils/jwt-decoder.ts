@@ -2,10 +2,10 @@ import * as jwt from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
 import { UnauthorizedException } from '@nestjs/common';
 
-import { EnvConfig } from '../models/EnvConfig.model';
+import { IEnvConfig } from '../models/EnvConfig.model';
 
 export const jwtDecorder = (token: string) => {
-  const configService = new ConfigService<EnvConfig, true>();
+  const configService = new ConfigService<IEnvConfig, true>();
   const JWT_SECRET = configService.get('JWT_SECRET');
 
   try {

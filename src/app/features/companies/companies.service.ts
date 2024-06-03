@@ -2,23 +2,32 @@ import {
   PaginationRequest,
   SortType,
 } from 'src/app/shared/utils/pagination-request';
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 
 import { getZonedTime } from './../../shared/utils/datetime';
-import { COMPANY_REPOSITORY } from 'src/app/core/constants/repositories.constants';
+import { COMPANY_REPOSITORY } from '../../core/constants/repositories.constants';
 import { Company } from './entities/company.entity';
 import { CreateCompanyDTO } from './DTO/create-company.dto';
 import { User } from '../users/entities/user.entity';
-import { MailService } from 'src/app/shared/services/mail.service';
-import { PaginatedResponse } from 'src/app/shared/utils/paginated-response';
+import { MailService } from '../../shared/services/mail.service';
+import { PaginatedResponse } from '../../shared/utils/paginated-response';
+import { UpdateCompanyDTO } from './DTO/update-company.dto';
+import { canUserHandleCompany } from '../../shared/utils/authorize';
+import { CacheService } from '../../shared/services/cache.service';
 
 @Injectable()
 export class CompaniesService {
   constructor(
     @Inject(COMPANY_REPOSITORY)
     private readonly companyRepository: Repository<Company>,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    private readonly cacheService: CacheService
   ) {}
 
   async createCompany(createCompanyDTO: CreateCompanyDTO, user: User) {
@@ -51,7 +60,8 @@ export class CompaniesService {
    */
   private getQueryBuilder(
     queryLevel = 0,
-    _user?: User
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _user: User | null
   ): SelectQueryBuilder<Company> {
     const qb = this.companyRepository.createQueryBuilder('company');
 
@@ -64,8 +74,13 @@ export class CompaniesService {
     return qb;
   }
 
-  async findCompany(companyId: string, user?: User, queryLevel?: number) {
+  async findCompany(companyId: string, user: User | null, queryLevel = 1) {
     try {
+      const cachedCompany = await this.cacheService.get('company', companyId);
+
+      // ! will query level effect this?
+      if (cachedCompany) return cachedCompany;
+
       const qb = this.getQueryBuilder(queryLevel, user).where(
         'company.id = :companyId',
         { companyId }
@@ -75,6 +90,8 @@ export class CompaniesService {
 
       if (!company) throw new NotFoundException('company did not found');
 
+      await this.cacheService.set('company', companyId, company, 300);
+
       return company;
     } catch (error) {
       throw error;
@@ -83,8 +100,8 @@ export class CompaniesService {
 
   async findCompanies(
     request: PaginationRequest,
-    queryLevel: number,
-    user?: User
+    user: User | null,
+    queryLevel = 1
   ) {
     try {
       const qb = this.getQueryBuilder(queryLevel, user)
@@ -108,6 +125,54 @@ export class CompaniesService {
     }
   }
 
-  // todo update company
-  // todo delete company
+  async updateCompany(user: User, updateCompanyDTO: UpdateCompanyDTO) {
+    try {
+      const company = await this.findCompany(updateCompanyDTO.id, user);
+
+      if (!company) throw new NotFoundException('company not found');
+
+      if (!user.isAdmin || !user.isManager) throw new UnauthorizedException();
+      if (user.isManager) canUserHandleCompany(user, company);
+
+      const { id, ...rest } = updateCompanyDTO;
+
+      return await this.companyRepository.manager.transaction(
+        async (manager) => {
+          const updateResult = await manager.update(Company, { id }, rest);
+
+          return Number(updateResult.affected) > 0 ? true : false;
+        }
+      );
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  }
+
+  async deleteCompany(user: User, id: string) {
+    try {
+      const company = await this.findCompany(id, user);
+
+      if (!company) throw new NotFoundException('company not found');
+
+      canUserHandleCompany(user, company);
+
+      // ! do we need to completely delete?
+      // ! or we can archive
+      return await this.companyRepository.manager.transaction(
+        async (manager) => {
+          manager.remove(Company, company);
+
+          return true;
+        }
+      );
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  }
+
+  // add employee/s
+  // remove employee/s
+  // post vacacies
 }

@@ -7,17 +7,17 @@ import {
 } from '@nestjs/common';
 import { map, tap, Observable } from 'rxjs';
 
-import { PAYLOAD_STATUS, Payload } from '../../shared/models/Payload.model';
+import { PAYLOAD_STATUS, IPayload } from '../../shared/models/Payload.model';
 import { Request } from '../../shared/models/Request.model';
 
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<T, Payload<T>> {
+export class ResponseInterceptor<T> implements NestInterceptor<T, IPayload<T>> {
   private readonly logger = new Logger(ResponseInterceptor.name);
 
   intercept(
     context: ExecutionContext,
     next: CallHandler
-  ): Observable<Payload<T>> {
+  ): Observable<IPayload<T>> {
     context.switchToHttp().getRequest<Request>().start = Date.now();
 
     return next.handle().pipe(
