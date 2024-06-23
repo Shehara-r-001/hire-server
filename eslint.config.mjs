@@ -31,7 +31,7 @@ export default [
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'warn',
         { ignoreRestSiblings: true },
       ],
       '@typescript-eslint/naming-convention': [

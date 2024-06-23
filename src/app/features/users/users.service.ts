@@ -12,6 +12,7 @@ import {
 } from '../../shared/utils/pagination-request';
 import { PaginatedResponse } from '../../shared/utils/paginated-response';
 import { ThrowNotFound } from '../../shared/utils/exceptions';
+import { UserRoles } from 'src/app/shared/enums/UserRoles.enum';
 
 @Injectable()
 export class UsersService {
@@ -19,6 +20,8 @@ export class UsersService {
     @Inject(USER_REPOSITORY)
     private readonly userRepository: Repository<User>
   ) {}
+
+  // todo: block creating user roles except normal user in sign up
 
   /**
    * used to creates a user. upgrade accordingle if auth changed to social
@@ -31,6 +34,7 @@ export class UsersService {
         await manager.save(User, {
           ...signUpDTO,
           createdAt: getZonedTime(new Date().toISOString()),
+          role: UserRoles.USER,
         });
 
         return true;

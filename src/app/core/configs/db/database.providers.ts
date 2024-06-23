@@ -3,9 +3,10 @@ import { ConfigService } from '@nestjs/config';
 
 import { DATA_SOURCE } from '../../constants/db.constants';
 
-import { User } from 'src/app/features/users/entities/user.entity';
-import { IEnvConfig } from 'src/app/shared/models/EnvConfig.model';
-import { Company } from 'src/app/features/companies/entities/company.entity';
+import { User } from '../../../features/users/entities/user.entity';
+import { IEnvConfig } from '../../../shared/models/EnvConfig.model';
+import { Company } from '../../../features/companies/entities/company.entity';
+import { Vacancy } from '../../../features/vacancies/entities/vacancy.entity';
 
 export const databaseProviders = [
   {
@@ -20,9 +21,10 @@ export const databaseProviders = [
         username: configServise.get('DB_USER'),
         password: configServise.get('DB_PASSWORD'),
         database: configServise.get('DB_NAME'),
-        entities: [User, Company],
+        entities: [User, Company, Vacancy],
         synchronize: false,
         logging: true,
+        entityPrefix: 'hire_',
         ssl: {
           rejectUnauthorized: true,
           ca: configServise.get('CA'),
