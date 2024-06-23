@@ -3,13 +3,26 @@ import {
   IsEnum,
   IsISO8601,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
+  MaxLength,
+  ValidateNested,
 } from 'class-validator';
-import { Column, Entity, JoinColumn, OneToMany, OneToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 
-import { BaseEntity } from 'src/app/shared/entities/BaseEntity';
+import { BaseEntity } from '../../../shared/entities/BaseEntity';
 import { User } from '../../users/entities/user.entity';
+import { Type } from 'class-transformer';
+import { Vacancy } from '../../vacancies/entities/vacancy.entity';
+import { Image } from 'src/app/shared/models/Image.model';
 
 export enum CompanyStatus {
   ACTIVE = 'active',
@@ -19,30 +32,36 @@ export enum CompanyStatus {
 }
 
 @Entity()
+@Index(['name', 'field'])
 export class Company extends BaseEntity {
   @IsNotEmpty()
   @IsString()
-  @Column()
+  @MaxLength(255)
+  @Column({ type: 'varchar', length: '255' })
   name: string;
 
   @IsNotEmpty()
   @IsEmail()
-  @Column({ unique: true })
+  @MaxLength(255)
+  @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
 
   @IsNotEmpty()
   @IsString()
-  @Column()
+  @MaxLength(20)
+  @Column({ type: 'varchar', length: 20 })
   phone: string;
 
   @IsNotEmpty()
   @IsString()
-  @Column()
+  @MaxLength(100)
+  @Column({ type: 'varchar', length: 100 })
   field: string;
 
   @IsOptional()
   @IsString()
-  @Column({ nullable: false })
+  @MaxLength(36)
+  @Column({ type: 'uuid', nullable: false })
   managerId: string;
 
   @IsOptional()
@@ -58,26 +77,33 @@ export class Company extends BaseEntity {
   Manager: User;
 
   @OneToMany(() => User, (User) => User.Company)
-  @JoinColumn({ referencedColumnName: 'companyId' })
+  // @JoinColumn({ referencedColumnName: 'companyId' })
   Employees: User[];
+
+  @OneToMany(() => Vacancy, (vacancy) => vacancy.Company)
+  Vacancies: Vacancy[];
 
   @IsNotEmpty()
   @IsString()
-  @Column({ type: 'varchar', length: 1000 })
+  @Column({ type: 'text' })
   description01: string;
 
   @IsOptional()
   @IsString()
-  @Column({ type: 'varchar', length: 1000, nullable: true })
+  @Column({ type: 'text', nullable: true })
   description02: string;
 
   @IsOptional()
-  @IsISO8601()
-  @Column({ type: 'time with time zone' })
-  createdAt: Date;
+  @IsObject()
+  @ValidateNested()
+  @Type(() => Image)
+  @Column({ nullable: true, type: 'simple-json' })
+  coverImage: Image;
 
   @IsOptional()
-  @IsISO8601()
-  @Column({ type: 'time with time zone', nullable: true })
-  updatedAt: Date;
+  @IsObject()
+  @ValidateNested()
+  @Type(() => Image)
+  @Column({ nullable: true, type: 'simple-json' })
+  image: Image;
 }

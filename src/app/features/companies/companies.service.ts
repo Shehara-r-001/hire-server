@@ -1,25 +1,26 @@
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Repository, SelectQueryBuilder } from 'typeorm';
+
 import {
   PaginationRequest,
   SortType,
-} from 'src/app/shared/utils/pagination-request';
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { Repository, SelectQueryBuilder } from 'typeorm';
-
+} from '../../shared/utils/pagination-request';
 import { getZonedTime } from './../../shared/utils/datetime';
 import { COMPANY_REPOSITORY } from '../../core/constants/repositories.constants';
-import { Company } from './entities/company.entity';
+import { Company, CompanyStatus } from './entities/company.entity';
 import { CreateCompanyDTO } from './DTO/create-company.dto';
 import { User } from '../users/entities/user.entity';
 import { MailService } from '../../shared/services/mail.service';
 import { PaginatedResponse } from '../../shared/utils/paginated-response';
 import { UpdateCompanyDTO } from './DTO/update-company.dto';
-import { canUserHandleCompany } from '../../shared/utils/authorize';
+import {
+  canUserHandleCompany,
+  checkIsAdmin,
+  isAdmin,
+  isManager,
+} from '../../shared/utils/authorize';
 import { CacheService } from '../../shared/services/cache.service';
+import { ThrowNotFound } from '../../shared/utils/exceptions';
 
 @Injectable()
 export class CompaniesService {
@@ -51,6 +52,7 @@ export class CompaniesService {
   }
 
   // todo add cache
+  // todo remove sensitive info from return data
 
   /**
    * provides a query builder for company repo
@@ -60,16 +62,19 @@ export class CompaniesService {
    */
   private getQueryBuilder(
     queryLevel = 0,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _user: User | null
+    user: User | null
   ): SelectQueryBuilder<Company> {
     const qb = this.companyRepository.createQueryBuilder('company');
 
-    if (queryLevel > 0)
-      qb.leftJoinAndSelect('company.Manager', 'Manager').leftJoinAndSelect(
-        'company.Employees',
-        'Employees'
-      );
+    if (queryLevel > 0) {
+      if (user && isAdmin(user))
+        qb.leftJoinAndSelect('company.Manager', 'Manager').leftJoinAndSelect(
+          'company.Employees',
+          'Employees'
+        );
+
+      qb.leftJoinAndSelect('company.Vacancies', 'Vacancies'); // todo: add query to filter active vacancies
+    }
 
     return qb;
   }
@@ -88,7 +93,7 @@ export class CompaniesService {
 
       const company = await qb.getOne();
 
-      if (!company) throw new NotFoundException('company did not found');
+      ThrowNotFound(company, 'company did not found');
 
       await this.cacheService.set('company', companyId, company, 300);
 
@@ -105,8 +110,14 @@ export class CompaniesService {
   ) {
     try {
       const qb = this.getQueryBuilder(queryLevel, user)
-        .skip(request.pageSize * request.page - 1)
+        .skip(request.pageSize * (request.page - 1))
         .take(request.pageSize);
+
+      if (!checkIsAdmin(user)) {
+        qb.andWhere('company.status = :status', {
+          status: CompanyStatus.ACTIVE,
+        });
+      }
 
       if (request.sortBy)
         qb.orderBy(`company.${request.sortBy}`, request.sortType);
@@ -129,10 +140,11 @@ export class CompaniesService {
     try {
       const company = await this.findCompany(updateCompanyDTO.id, user);
 
-      if (!company) throw new NotFoundException('company not found');
+      ThrowNotFound(company, 'company did not found');
 
-      if (!user.isAdmin || !user.isManager) throw new UnauthorizedException();
-      if (user.isManager) canUserHandleCompany(user, company);
+      if (!(isAdmin(user) || isManager(user)))
+        throw new UnauthorizedException();
+      if (isManager(user)) canUserHandleCompany(user, company);
 
       const { id, ...rest } = updateCompanyDTO;
 
@@ -153,7 +165,7 @@ export class CompaniesService {
     try {
       const company = await this.findCompany(id, user);
 
-      if (!company) throw new NotFoundException('company not found');
+      ThrowNotFound(company, 'company did not found');
 
       canUserHandleCompany(user, company);
 

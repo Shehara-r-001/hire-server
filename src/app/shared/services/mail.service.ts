@@ -23,13 +23,13 @@ export class MailService {
 
   private async sendEmail(mailData: IMailData) {
     try {
-      await this.sendGridService.send({
-        to: mailData.to,
-        from: this.SENDER,
-        subject: mailData.subject,
-        templateId: mailData.templateId,
-        dynamicTemplateData: mailData.dynamicTemplateData,
-      });
+      // await this.sendGridService.send({
+      //   to: mailData.to,
+      //   from: this.SENDER,
+      //   subject: mailData.subject,
+      //   templateId: mailData.templateId,
+      //   dynamicTemplateData: mailData.dynamicTemplateData,
+      // });
 
       return true;
     } catch (error) {

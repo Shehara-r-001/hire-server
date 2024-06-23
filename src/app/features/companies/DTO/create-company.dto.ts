@@ -10,4 +10,6 @@ export class CreateCompanyDTO extends PickType(Company, [
   'managerId',
   'description01',
   'description02',
+  'image',
+  'coverImage',
 ]) {}

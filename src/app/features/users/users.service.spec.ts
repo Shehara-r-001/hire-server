@@ -8,6 +8,8 @@ import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { USER_REPOSITORY } from '../../core/constants/repositories.constants';
 import { UserRoles } from '../../shared/enums/UserRoles.enum';
+import { UserStatus } from '../../shared/enums/user.enum';
+import { Company } from '../companies/entities/company.entity';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -80,6 +82,15 @@ describe('UsersService', () => {
 
   describe('findOne', () => {
     it('should return matching user', async () => {
+      const testCompany = {
+        name: 'Test Company',
+        managerId: 'manager-id',
+        email: 'test@email.com',
+        description01: 'test description 01',
+        description02: 'test description 02',
+        field: 'IT',
+        phone: '0789999440',
+      };
       const mockUser = {
         id: '2',
         firstname: 'Jane',
@@ -90,6 +101,14 @@ describe('UsersService', () => {
         role: UserRoles.GUEST,
         createdAt: new Date('2022-01-03T09:45:00Z'),
         updatedAt: new Date('2022-01-04T11:20:00Z'),
+        phone: '',
+        status: UserStatus.ACTIVE,
+        companyId: '',
+        timezone: '',
+        profession: '',
+        Company: { ... },
+        isManager: false,
+        isAdmin: false,
       };
 
       jest.spyOn(userRepository, 'findOneBy').mockResolvedValueOnce(mockUser);
