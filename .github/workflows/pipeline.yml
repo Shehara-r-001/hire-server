@@ -17,10 +17,10 @@ jobs:
         with:
           node-version: '22.3.0'
       - name: Install dependencies
-        run: yarn install
+        run: npm install
       - name: Check styling
-        run: yarn lint
+        run: npm run lint
       - name: Build
-        run: yarn build
+        run: npm run build
     #   - name: Test
     #     run: npm run test
