@@ -40,6 +40,9 @@ export class CompaniesService {
             ? createCompanyDTO.managerId
             : user.id,
           createdAt: getZonedTime(new Date().toISOString()),
+          status: isAdmin(user)
+            ? createCompanyDTO.status
+            : CompanyStatus.PENDING,
         });
 
         await this.mailService.sendCreateCompanyEmail(company, user);

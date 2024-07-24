@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as requestIp from 'request-ip';
@@ -50,6 +50,12 @@ async function bootstrap() {
     origin: 'http://localhost:5000',
   });
 
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+    prefix: 'v',
+  });
+
   app.use(helmet());
 
   const swaggerConfig = new DocumentBuilder()
@@ -68,11 +74,11 @@ async function bootstrap() {
   Logger.log(DateTime.local().toLocaleString(DateTime.DATETIME_FULL));
   Logger.log(
     NODE_ENV === NodeEnvironment.DEV &&
-      `Server is listening on ${BASE_URL}:${PORT}`
+      `Server is listening on ${BASE_URL}:${PORT}/v1`
   );
   Logger.log(
     NODE_ENV === NodeEnvironment.DEV &&
-      `Check the API docs on ${BASE_URL}:${PORT}/api`
+      `Check the API docs on ${BASE_URL}:${PORT}/v1/api`
   );
 }
 bootstrap().catch((e) => Logger.error(e));

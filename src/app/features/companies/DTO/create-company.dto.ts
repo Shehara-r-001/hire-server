@@ -7,6 +7,7 @@ export class CreateCompanyDTO extends PickType(Company, [
   'email',
   'field',
   'phone',
+  'status',
   'managerId',
   'description01',
   'description02',
